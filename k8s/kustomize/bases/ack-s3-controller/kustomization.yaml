@@ -1,0 +1,11 @@
+resources:
+  - github.com/aws/aws-controllers-k8s/services/s3/config/default?ref=c75f095f34bcdb1fedef1f5f17aa2a38d70511b1 
+# Upstream kustomize support (https://github.com/aws/aws-controllers-k8s/blob/main/services/s3/config/controller/deployment.yaml#L1-L6) creates a namespace called ack-system which is not used by us. So we will patch ns to change its name to ops-null namespace to have null effect
+patches:
+- target:
+    kind: Namespace
+    name: ack-system
+  patch: |-
+    - op: replace
+      path: /metadata/name
+      value: ops-null

@@ -1,0 +1,2 @@
+resources:
+  - github.com/kubernetes-sigs/aws-load-balancer-controller/config/crd/?ref=v2.2.1

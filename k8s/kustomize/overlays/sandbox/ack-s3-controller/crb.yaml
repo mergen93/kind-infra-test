@@ -1,0 +1,9 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+ name: ack-s3-controller-rolebinding
+ annotations:
+    flux.weave.works/ignore: "true"
+subjects:
+- kind: ServiceAccount
+  name: ack-s3-controller

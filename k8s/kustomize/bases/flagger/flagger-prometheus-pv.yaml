@@ -1,0 +1,22 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flagger-prometheus
+  annotations:
+    flux.weave.works/ignore: "true"
+  labels:
+    app: flagger-prometheus
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: efs-sc
+  csi:
+    driver: efs.csi.aws.com
+    volumeAttributes:
+      encryptInTransit: "true"
+    volumeHandle: fs-XXX:/flagger-prometheus

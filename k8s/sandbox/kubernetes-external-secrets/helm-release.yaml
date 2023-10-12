@@ -1,0 +1,35 @@
+---
+apiVersion: helm.fluxcd.io/v1
+kind: HelmRelease
+metadata:
+  name: kubernetes-external-secret
+  namespace: ops
+  annotations:
+    flux.weave.works/ignore: "true"
+    fluxcd.io/automated: "true"
+    filter.fluxcd.io/chart-image: semver:~6
+spec:
+  chart:
+    repository: https://external-secrets.github.io/kubernetes-external-secrets/
+    name: kubernetes-external-secrets
+    version: 6.3.0
+  helmVersion: v3
+  values:
+    image:
+      repository: docker.io/godaddy/kubernetes-external-secrets
+      tag: 6.0.0
+    serviceAccount:
+      annotations:
+        eks.amazonaws.com/role-arn: arn:aws:iam::452534275406:role/tf-platform-k8s-sandbox-ops-kubernetes-external-secrets
+    resources:
+      limits:
+        cpu: 200m
+        memory: 128Mi
+      requests:
+        cpu: 50m
+        memory: 32Mi
+    securityContext:
+      fsGroup: 65534
+    env:
+      AWS_REGION: us-east-1
+      POLLER_INTERVAL_MILLISECONDS: 60000

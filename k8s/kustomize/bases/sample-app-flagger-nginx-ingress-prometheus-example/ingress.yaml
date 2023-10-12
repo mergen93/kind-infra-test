@@ -1,0 +1,21 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: sample-app-flagger-nginx-ingress-prometheus-example
+  annotations:
+    flux.weave.works/ignore: "true"
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/whitelist-source-range: "66.161.171.254/32,4.14.235.30/32"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  tls:
+  - hosts:
+    - XXX
+  rules:
+    - host: XXX
+      http:
+        paths:
+          - path: /*
+            backend:
+              serviceName: sample-app-flagger-nginx-ingress-prometheus-example
+              servicePort: 80

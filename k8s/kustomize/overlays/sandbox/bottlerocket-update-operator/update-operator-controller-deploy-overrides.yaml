@@ -1,0 +1,7 @@
+- op: add
+  path: /spec/template/spec/affinity/nodeAffinity/requiredDuringSchedulingIgnoredDuringExecution/nodeSelectorTerms/0/matchExpressions/-
+  value:
+    key: "os-type"
+    operator: In
+    values:
+      - "bottlerocket"

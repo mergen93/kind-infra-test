@@ -1,0 +1,91 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stateful-sample-app-drupal-example
+  labels:
+    app: stateful-sample-app-drupal-example
+    tier: frontend
+  annotations:
+    fluxcd.io/automated: "false"
+    flux.weave.works/ignore: "true"
+spec:
+  replicas: 2
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 0
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: stateful-sample-app-drupal-example
+      tier: frontend
+  template:
+    metadata:
+      labels:
+        app: stateful-sample-app-drupal-example
+        tier: frontend
+    spec:
+      imagePullSecrets:
+        - name: dockerconfig
+      securityContext:
+        runAsUser: 10002
+        runAsGroup: 10002
+        fsGroup: 10002
+      initContainers:
+        - name: init-sites-volume
+          image: drupal:8.6.15-apache
+          command: ['/bin/bash', '-c']
+          args: ['cp -r /var/www/html/sites /data; chown 10002:10002 /data/ -R']
+          volumeMounts:
+          - mountPath: /data
+            name: drupal-data
+      containers:
+        - name: drupal
+          image: drupal:8.6.15-apache
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: DRUPAL_DATABASE_HOST
+              value: stateful-sample-app-drupal-example-db
+            - name: DRUPAL_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: stateful-sample-app-drupal-mysql-pass
+                  key: password
+          livenessProbe:
+            httpGet:
+              path: /user/login
+              port: http
+            initialDelaySeconds: 120
+          readinessProbe:
+            httpGet:
+              path: /user/login
+              port: http
+            initialDelaySeconds: 120
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 512Mi
+            requests:
+              cpu: 300m
+              memory: 512Mi
+          volumeMounts:
+            - name: drupal-data
+              mountPath: /var/www/html/modules
+              subPath: modules
+            - name: drupal-data
+              mountPath: /var/www/html/profiles
+              subPath: profiles
+            - name: drupal-data
+              mountPath: /var/www/html/sites
+              subPath: sites
+            - name: drupal-data
+              mountPath: /var/www/html/themes
+              subPath: themes
+      volumes:
+        - name: drupal-data
+          persistentVolumeClaim:
+            claimName: stateful-sample-app-drupal-example

@@ -1,0 +1,6 @@
+namespace: "ops-managed"
+resources:
+- ../../../bases/platform-k8s-go-sample-app-nginx-ingress-example
+- ingress.yaml
+patchesStrategicMerge:
+- deployment-env.yaml

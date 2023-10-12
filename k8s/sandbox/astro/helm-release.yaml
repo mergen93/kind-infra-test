@@ -1,0 +1,324 @@
+---
+apiVersion: helm.fluxcd.io/v1
+kind: HelmRelease
+metadata:
+  name: astro
+  namespace: ops
+  annotations:
+    filter.fluxcd.io/chart-image: glob:v1.6.*  
+    fluxcd.io/automated: "true"
+    flux.weave.works/ignore: "true"
+spec:
+  chart:
+    repository: https://charts.fairwinds.com/stable/
+    name: astro
+    version: 1.0.4
+  helmVersion: v3
+  values:
+    image:
+      repository: quay.io/fairwinds/astro
+      tag: v1.6.0
+    deployment:
+      replicas: 1
+    secret:
+      create: false
+      name: datadog-keys
+    custom_config:
+      enabled: true
+      data: |
+        ---
+        cluster_variables:
+          notification_destination: "@slack-PowerSchool-team-cloudops-k8s-alerts-dev"
+          cluster_name: "sandbox"
+        rulesets:
+        - type: deployment
+          match_annotations:
+            - name: deploy/replica-alert
+              value: astro
+          monitors:
+            deploy-replica-alert:
+              name: "[ASTRO {{ ClusterVariables.cluster_name }}-{{ .ObjectMeta.Namespace }}] Deployment Replica Alert: {{ .ObjectMeta.Name }}"
+              type: metric alert
+              query: "max(last_10m):max:kubernetes_state.deployment.replicas_available{deployment:{{ .ObjectMeta.Name }},namespace:{{ .ObjectMeta.Namespace }}} <= 0"
+              message: |-
+                {{ "{{#is_alert}}" }}
+                Available replicas is currently 0 for {{ .ObjectMeta.Name }}
+                {{ "{{/is_alert}}" }}
+                {{ "{{^is_alert}}" }}
+                Available replicas is no longer 0 for {{ .ObjectMeta.Name }}
+                {{ "{{/is_alert}}" }}
+                {{ ClusterVariables.notification_destination }}
+              tags:
+                - deploy-replica-alert
+              options:
+                no_data_timeframe: 60
+                notify_audit: false
+                notify_no_data: false
+                renotify_interval: 5
+                new_host_delay: 5
+                evaluation_delay: 300
+                timeout: 300
+                escalation_message: ""
+                threshold_count:
+                  critical: 0
+                require_full_window: true
+                locked: false
+        - type: deployment
+          match_annotations:
+            - name: deploy/new-image
+              value: astro
+          monitors:
+            deploy-new-image:
+              name: "[ASTRO {{ ClusterVariables.cluster_name }}-{{ .ObjectMeta.Namespace }}] Application Auto Deployment of {{ .ObjectMeta.Name }} due to a new Docker image"
+              type: log alert
+              query: "logs(\"service:flux envname:{{ ClusterVariables.cluster_name }} kube_namespace:{{ .ObjectMeta.Namespace }} \"added update to automation run\" {{ .ObjectMeta.Name }}\").index(\"main\").rollup(\"count\").last(\"15m\") >= 10"
+              message: |-
+                {{ "{{#is_alert}}" }}
+                {{ .ObjectMeta.Name }} Service has been deployed to the {{ .ObjectMeta.Namespace }} in {{ ClusterVariables.cluster_name }}
+                {{ "{{/is_alert}}" }}
+                {{ ClusterVariables.notification_destination }}
+              tags:
+                - deploy-new-image
+              options:
+                no_data_timeframe: 60
+                notify_audit: false
+                notify_no_data: false
+                renotify_interval: 0
+                new_host_delay: 300
+                evaluation_delay: 300
+                timeout: 300
+                escalation_message: ""
+                threshold_count:
+                  critical: 10
+                  warning: 1
+                require_full_window: true
+                locked: false
+        - type: namespace
+          match_annotations:
+            - name: ns/falco
+              value: astro
+          monitors:
+            ns-falco:
+              name: "[ASTRO {{ ClusterVariables.cluster_name }}-{{ .ObjectMeta.Name }}] Falco Alert"
+              type: log alert
+              query: "logs(\"service:falco (\"A shell was spawned in a container with an attached terminal\" OR \"Privileged container started\" OR \"File below /etc opened for writing\")\").index(\"main\").rollup(\"count\").last(\"5m\") > 10"
+              message: |-
+                {{ ClusterVariables.notification_destination }}
+              tags:
+                - ns-falco
+              options:
+                no_data_timeframe: 60
+                notify_audit: false
+                notify_no_data: false
+                renotify_interval: 5
+                new_host_delay: 5
+                evaluation_delay: 300
+                timeout: 300
+                escalation_message: ""
+                threshold_count:
+                  critical: 10
+                  warning: 5
+                require_full_window: true
+                locked: false
+        - type: namespace
+          match_annotations:
+            - name: ns/deploy-replica-alert
+              value: astro
+          monitors:
+            ns-deploy-replica-alert:
+              name: "[ASTRO {{ ClusterVariables.cluster_name }}-{{ .ObjectMeta.Name }}] Deployment Replica Alert for {{ .ObjectMeta.Name }} Namespace"
+              type: metric alert
+              query: "max(last_10m):max:kubernetes_state.deployment.replicas_available{namespace:{{ .ObjectMeta.Name }},envname:{{ ClusterVariables.cluster_name }}} by {kube_deployment} <= 0"
+              message: |-
+                {{ "{{#is_alert}}" }}
+                Available replicas is currently 0 for {{ .ObjectMeta.Name }}
+                {{ "{{/is_alert}}" }}
+                {{ "{{^is_alert}}" }}
+                Available replicas is no longer 0 for {{ .ObjectMeta.Name }}
+                {{ "{{/is_alert}}" }}
+                {{ ClusterVariables.notification_destination }}
+              tags:
+                - ns-deploy-replica-alert
+              options:
+                no_data_timeframe: 60
+                notify_audit: false
+                notify_no_data: false
+                renotify_interval: 5
+                new_host_delay: 5
+                evaluation_delay: 300
+                timeout: 300
+                escalation_message: ""
+                threshold_count:
+                  critical: 0
+                require_full_window: true
+                locked: false
+        - type: namespace
+          match_annotations:
+            - name: ns/increased-pod-crash
+              value: astro
+          monitors:
+            ns-increased-pod-crash:
+              name: "[ASTRO {{ ClusterVariables.cluster_name }}-{{ .ObjectMeta.Name }}] Increased Pod Crashes in {{ .ObjectMeta.Name }} Namespace"
+              type: query alert
+              query: "avg(last_5m):avg:kubernetes_state.container.restarts{namespace:{{ .ObjectMeta.Name }}} by {pod} - hour_before(avg:kubernetes_state.container.restarts{namespace:{{ .ObjectMeta.Name }}} by {pod}) > 3"
+              message: |-
+                {{ "{{#is_alert}}" }}
+                {{ "{{pod.name}}" }} has crashed repeatedly over the last hour
+                {{ "{{/is_alert}}" }}
+                {{ "{{^is_alert}}" }}
+                {{ "{{pod.name}}" }} appears to have stopped crashing
+                {{ "{{/is_alert}}" }}
+                {{ ClusterVariables.notification_destination }}
+              tags:
+                - ns-increased-pod-crash
+              options:
+                notify_audit: false
+                notify_no_data: false
+                thresholds:
+                  critical: 3
+                locked: false
+        - type: namespace
+          match_annotations:
+            - name: ns/pending-pods
+              value: astro
+          monitors:
+            ns-pending-pods:
+              name: "[ASTRO {{ ClusterVariables.cluster_name }}-{{ .ObjectMeta.Name }}] Pending Pods in {{ .ObjectMeta.Name }} Namespace"
+              type: query alert
+              query: "min(last_15m):sum:kubernetes_state.pod.status_phase{phase:pending,cluster_name:tf-platform-k8s-{{ ClusterVariables.cluster_name }},kube_namespace:{{ .ObjectMeta.Name }}}.fill(zero) >= 2"
+              message: |-
+                {{ "{{#is_alert}}" }}
+                There has been more than 1 pod Pending for 15  minutes.
+                There are currently {{ "{{value}}" }} pods Pending.
+                  - Is something crash-looping?
+                  - Is autoscaling adding node capacity where needed?
+                  - Is a secret or a configmap missing?
+                {{ "{{/is_alert}}" }}
+                {{ "{{#is_alert_recovery}}" }}
+                Pods are no longer pending.
+                {{ "{{/is_alert_recovery}}" }}
+                {{ ClusterVariables.notification_destination }}
+              tags:
+                - ns-pending-pods
+              options:
+                notify_audit: false
+                notify_no_data: false
+                new_host_delay: 300
+                thresholds:
+                  critical: 2
+                locked: false
+        - type: namespace
+          match_annotations:
+            - name: ns/hpa-errors
+              value: astro
+          monitors:
+            ns-hpa-errors:
+              name: "[ASTRO {{ ClusterVariables.cluster_name }}-{{ .ObjectMeta.Name }}] HPA Errors"
+              type: event alert
+              query: "events('sources:kubernetes priority:all \"unable to fetch metrics from resource metrics API:\"').by('hpa').rollup('count').last('1h') > 200"
+              message: |-
+                {{ "{{#is_alert}}" }}
+                A high number of hpa failures (> {{ "{{threshold}}" }} ) are occurring.  Can HPAs get metrics?
+                {{ "{{/is_alert}}" }}
+                {{ "{{#is_alert_recovery}}" }}
+                HPA Metric Retrieval Failure has recovered.
+                {{ "{{/is_alert_recovery}}" }}
+                {{ ClusterVariables.notification_destination }}
+              tags:
+                - ns-hpa-errors
+              options:
+                notify_audit: false
+                notify_no_data: false
+                require_full_window: true
+                locked: false
+        - type: namespace
+          match_annotations:
+            - name: ns/host-alerts
+              value: astro
+          monitors:
+            ns-host-high-mem-use:
+              name: "[ASTRO {{ ClusterVariables.cluster_name }}-{{ .ObjectMeta.Name }}] Host Memory Utilization"
+              type: query alert
+              query: "avg(last_15m):avg:system.mem.pct_usable{cluster_name:tf-platform-k8s-{{ ClusterVariables.cluster_name }}} by {host} < 0.1"
+              message: |-
+                {{ "{{#is_alert}}" }}
+                Running out of free memory on {{ "{{host.name}}" }}
+                {{ "{{/is_alert}}" }}
+                {{ "{{#is_alert_to_warning}}" }}
+                Memory usage has decreased.
+                {{ "{{/is_alert_to_warning}}" }}
+                {{ "{{#is_alert_recovery}}" }}
+                Memory is below threshold again
+                {{ "{{/is_alert_recovery}}" }}
+                {{ ClusterVariables.notification_destination }}
+              tags:
+                - ns-host-high-mem-use
+                - ns-host-alerts
+              options:
+                notify_audit: false
+                notify_no_data: false
+                new_host_delay: 300
+                require_full_window: true
+                thresholds:
+                  critical: 0.1
+                  warning: 0.15
+                locked: false
+            ns-host-disk-use:
+              name: "[ASTRO {{ ClusterVariables.cluster_name }}-{{ .ObjectMeta.Name }}] Host Disk Usage"
+              type: metric alert
+              query: "avg(last_30m):(avg:system.disk.total{cluster_name:tf-platform-k8s-{{ ClusterVariables.cluster_name }}} by {host} - avg:system.disk.free{cluster_name:tf-platform-k8s-{{ ClusterVariables.cluster_name }}} by {host}) / avg:system.disk.total{cluster_name:tf-platform-k8s-{{ ClusterVariables.cluster_name }}} by {host} * 100 > 90"
+              message: |-
+                {{ "{{#is_alert}}" }}
+                Disk Usage has been above threshold over 30 minutes on {{ "{{host.name}}" }}
+                {{ "{{/is_alert}}" }}
+                {{ "{{#is_warning}}" }}
+                Disk Usage has been above threshold over 30 minutes on {{ "{{host.name}}" }}
+                {{ "{{/is_warning}}" }}
+                {{ "{{^is_alert}}" }}
+                Disk Usage has recovered on {{ "{{host.name}}" }}
+                {{ "{{/is_alert}}" }}
+                {{ "{{^is_warning}}" }}
+                Disk Usage has recovered on {{ "{{host.name}}" }}
+                {{ "{{/is_warning}}" }}
+                {{ ClusterVariables.notification_destination }}
+              tags:
+                - ns-host-disk-use
+                - ns-host-alerts
+              options:
+                notify_audit: false
+                notify_no_data: false
+                new_host_delay: 300
+                require_full_window: true
+                thresholds:
+                  critical: 90
+                  warning: 80
+                  warning_recovery: 75
+                  critical_recovery: 85
+                locked: false
+            ns-io-wait-times:
+              name: "[ASTRO {{ ClusterVariables.cluster_name }}-{{ .ObjectMeta.Name }}] Host I/O Wait Times"
+              type: metric alert
+              query: "avg(last_10m):avg:system.cpu.iowait{cluster_name:tf-platform-k8s-{{ ClusterVariables.cluster_name }}} by {host} > 50"
+              message: |-
+                {{ "{{#is_alert}}" }}
+                The I/O wait time for {host.ip} is very high
+                - Is the EBS volume out of burst capacity for iops?
+                - Is something writing lots of errors to the journal?
+                - Is there a pod doing something unexpected (crash looping, etc)?
+                {{ "{{/is_alert}}" }}
+                {{ "{{^is_alert}}" }}
+                The EBS volume burst capacity is returning to normal.
+                {{ "{{/is_alert}}" }}
+                {{ ClusterVariables.notification_destination }}
+              tags:
+                - ns-io-wait-times
+                - ns-host-alerts
+              options:
+                notify_audit: false
+                new_host_delay: 300
+                notify_no_data: false
+                require_full_window: true
+                locked: false
+                thresholds:
+                  critical: 50
+                  warning: 30

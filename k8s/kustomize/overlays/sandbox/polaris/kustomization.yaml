@@ -1,0 +1,5 @@
+namespace: "ops"
+resources:
+- ../../../bases/polaris
+patchesStrategicMerge:
+- deployment-env.yaml

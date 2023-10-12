@@ -1,0 +1,9 @@
+version: 1
+patchUpdated:
+  generators:
+    - command: kustomize build platform-k8s-go-sample-app-nginx-ingress-example
+    # - command: kustomize build utils
+    # - command: kustomize build sample-app-flagger-nginx-ingress-prometheus-example
+    # - command: kustomize build sample-app-flagger-nginx-ingress-datadog-example
+    - command: kustomize build stateful-sample-app-drupal-example
+  patchFile:  flux-patch.yaml

@@ -1,0 +1,42 @@
+---
+apiVersion: helm.fluxcd.io/v1
+kind: HelmRelease
+metadata:
+  name: newrelic-infra
+  namespace: ops
+  annotations:
+    flux.weave.works/ignore: "true"
+    fluxcd.io/automated: "false"
+spec:
+  chart:
+    repository: https://helm-charts.newrelic.com/
+    name: nri-bundle
+    version: 2.14.0
+  helmVersion: v2
+  rollback:
+    enable: true
+  values:
+    infrastructure:
+      enabled: true
+    webhook:
+      enabled: false
+    ksm:
+      enabled: false
+    kubeEvents:
+      enabled: true
+    global:
+      customSecretName: um-newrelic-license-key
+      customSecretLicenseKey: license-key
+      cluster: tf-platform-k8s-sandbox
+    newrelic-infrastructure:
+      verboseLog: false
+      privileged: false
+    nri-kube-events:
+      #These resources do not apply to the infrastructure agent container as the chart does not have support for it
+      resources:
+        limits:
+          memory: 128Mi
+          cpu: 500m
+        requests:
+          memory: 128Mi
+          cpu: 100m

@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ack-s3-controller
+  annotations:
+    flux.weave.works/ignore: "true"
+    fluxcd.io/automated: "true"
+    fluxcd.io/tag.controller: glob:s3-v0.*
+  namespace: ack-system
+spec:
+  template:
+    spec:
+      containers:
+        - args:
+            - --aws-account-id
+            - "468812058286"
+            - --aws-region
+            - "us-east-1"
+            - --enable-development-logging
+            - "true"
+            - --log-level
+            - "debug"
+          name: controller
+          image: public.ecr.aws/aws-controllers-k8s/controller:Update-tag-in-kustomization
+      serviceAccount: ack-s3-controller
+      serviceAccountName: ack-s3-controller
+      imagePullSecrets:
+      - name: dockerconfig

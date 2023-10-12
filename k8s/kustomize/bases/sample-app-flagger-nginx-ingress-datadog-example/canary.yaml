@@ -1,0 +1,70 @@
+apiVersion: flagger.app/v1beta1
+kind: Canary
+metadata:
+  name: sample-app-flagger-nginx-ingress-datadog-example
+  annotations:
+    flux.weave.works/ignore: "true"
+spec:
+  provider: nginx
+  # deployment reference
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: sample-app-flagger-nginx-ingress-datadog-example
+  # ingress reference
+  ingressRef:
+    apiVersion: extensions/v1beta1
+    kind: Ingress
+    name: sample-app-flagger-nginx-ingress-datadog-example
+  # HPA reference (optional)
+  autoscalerRef:
+    apiVersion: autoscaling/v2beta1
+    kind: HorizontalPodAutoscaler
+    name: sample-app-flagger-nginx-ingress-datadog-example
+  # the maximum time in seconds for the canary deployment
+  # to make progress before it is rollback (default 600s)
+  progressDeadlineSeconds: 60
+  service:
+    # ClusterIP port number
+    port: 80
+    # container port number or name
+    targetPort: 9898
+  analysis:
+    alerts:
+      - name: "Slack Notification"
+        severity: info
+        providerRef:
+          name: ops-alerts
+          namespace: ops
+    # schedule interval (default 60s)
+    interval: 10s
+    # max number of failed metric checks before rollback
+    threshold: 10
+    # max traffic percentage routed to canary
+    # percentage (0-100)
+    maxWeight: 50
+    # canary increment step
+    # percentage (0-100)
+    stepWeight: 5
+    # NGINX Prometheus checks
+    metrics:
+    - name: process-open-fds
+      templateRef:
+        name: process-open-fds
+      thresholdRange:
+        max: 12
+      interval: 2m
+    # testing (optional)
+    webhooks:
+      - name: acceptance-test
+        type: pre-rollout
+        url: http://flagger-loadtester.ops/
+        timeout: 30s
+        metadata:
+          type: bash
+          cmd: "curl -sd 'test' http://sample-app-flagger-nginx-ingress-datadog-example-canary.ops-managed/token | grep token"
+      - name: load-test
+        url: http://flagger-loadtester.ops/
+        timeout: 5s
+        metadata:
+          cmd: "hey -z 1m -q 10 -c 2 https://sampleapp-flagger-nginx-promethus.ops.sandbox-k8s.hobsonsdev.net/"

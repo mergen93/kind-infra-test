@@ -1,0 +1,11 @@
+- op: replace
+  path: /metadata/annotations/service.beta.kubernetes.io~1aws-load-balancer-ssl-cert
+  value: arn:aws:acm:us-east-1:452534275406:certificate/948f06c9-0e48-4fb4-b900-4de2729d4006
+- op: replace
+  path: /metadata/annotations/service.beta.kubernetes.io~1aws-load-balancer-additional-resource-tags
+  value: "EnvName=sandbox,EnvType=sandbox,MaintenanceContact=dl-platform-k8s@hobsons.com,Name=ops-nginx-controller,OwnerContact=dl-platform-k8s@hobsons.com,ProductComponent=ops-controller,ProductLine=platform,Provisioner=fluxcd,HobsonsGitRepo=platform-core-k8s-ops-workspaces"
+- op: replace
+  path: /spec/loadBalancerSourceRanges
+  value:
+    - "66.161.171.254/32"
+    - "4.14.235.30/32"

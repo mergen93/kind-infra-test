@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stateful-sample-app-drupal-example-db
+  annotations:
+    flux.weave.works/ignore: "true"
+  labels:
+    app: stateful-sample-app-drupal-example
+spec:
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: mysql
+  selector:
+    app: stateful-sample-app-drupal-example-db
+    tier: backend

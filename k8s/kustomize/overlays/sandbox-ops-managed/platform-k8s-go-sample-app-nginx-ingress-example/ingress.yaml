@@ -1,0 +1,21 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: platform-k8s-go-sample-app-nginx-ingress-example
+  annotations:
+    flux.weave.works/ignore: "true"
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/whitelist-source-range: "66.161.171.254/32,4.14.235.30/32"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  tls:
+  - hosts:
+    - sampleapp-nginx-ingress.ops.sandbox-k8s.hobsonsdev.net
+  rules:
+    - host: sampleapp-nginx-ingress.ops.sandbox-k8s.hobsonsdev.net
+      http:
+        paths:
+          - path: /*
+            backend:
+              serviceName: platform-k8s-go-sample-app-nginx-ingress-example
+              servicePort: 80

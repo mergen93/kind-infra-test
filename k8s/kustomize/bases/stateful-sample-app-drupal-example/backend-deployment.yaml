@@ -1,0 +1,60 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stateful-sample-app-drupal-example-db
+  labels:
+    app: stateful-sample-app-drupal-example-db
+    tier: backend
+  annotations:
+    fluxcd.io/automated: "false"
+    flux.weave.works/ignore: "true"
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 0
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: stateful-sample-app-drupal-example-db
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: stateful-sample-app-drupal-example-db
+        tier: backend
+    spec:
+      securityContext:
+        runAsUser: 10003
+        runAsGroup: 10003
+        fsGroup: 10003
+      containers:
+      - image: mysql:5.6
+        imagePullPolicy: IfNotPresent
+        name: mysql
+        env:
+        - name: MYSQL_DATABASE
+          value: drupal-db
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: stateful-sample-app-drupal-mysql-pass
+              key: password
+        ports:
+        - containerPort: 3306
+          name: mysql
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 512Mi
+          requests:
+            cpu: 300m
+            memory: 512Mi
+        volumeMounts:
+        - name: drupal-db
+          mountPath: /var/lib/mysql
+      volumes:
+        - name: drupal-db
+          persistentVolumeClaim:
+            claimName: stateful-sample-app-drupal-example-db

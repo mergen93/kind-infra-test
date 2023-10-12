@@ -1,0 +1,10 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-app-flagger-nginx-ingress-prometheus-example
+spec:
+  template:
+    spec:
+      containers:
+        - name: flagger-nginx-prometheus
+          image: hobsons-platform-docker-sandbox-local.jfrog.io/platform/go-sample-app-impact:v1.2

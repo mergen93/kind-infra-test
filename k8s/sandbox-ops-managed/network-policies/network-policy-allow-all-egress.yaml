@@ -1,0 +1,14 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-all-egress
+  namespace: ops-managed
+  annotations:
+    flux.weave.works/ignore: "true"
+spec:
+  podSelector: {}
+  egress:
+    - {}
+  policyTypes:
+    - Egress

@@ -1,0 +1,10 @@
+namespace: "ops"
+resources:
+- ../../../bases/nginx-ingress-controller
+patchesJson6902:
+- target:
+    group: ""
+    version: v1
+    kind: Service
+    name: ingress-nginx
+  path: ./service-nlb-overrides.yaml

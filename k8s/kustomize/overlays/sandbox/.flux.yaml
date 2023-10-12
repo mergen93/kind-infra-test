@@ -1,0 +1,15 @@
+version: 1
+patchUpdated:
+  generators:
+    - command: kustomize build polaris
+    - command: kustomize build weavescope
+    - command: kustomize build ops-apps-shared-ingress
+    - command: kustomize build nginx-ingress-controller
+    - command: kustomize build flagger
+    - command: kustomize build opa-gatekeeper
+    - command: kustomize build aws-efs-csi-driver
+    - command: kustomize build bottlerocket-update-operator
+    - command: kustomize build ack-s3-controller
+    - command: kustomize build aws-load-balancer-controller
+    - command: kustomize build calico-crds
+  patchFile:  flux-patch.yaml

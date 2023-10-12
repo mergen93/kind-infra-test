@@ -1,0 +1,16 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: stateful-sample-app-drupal-example
+  annotations:
+    flux.weave.works/ignore: "true"
+  labels:
+    app: stateful-sample-app-drupal-example
+spec:
+  accessModes:
+  - ReadWriteMany
+  storageClassName: efs-sc
+  resources:
+    requests:
+      storage: 10Gi

@@ -1,0 +1,16 @@
+namespace: "ops"
+resources:
+- ../../../bases/ops-apps-shared-ingress
+patchesJson6902:
+- target:
+    group: networking.k8s.io
+    version: v1
+    kind: Ingress
+    name: ops-apps
+  path: ./shared-ingress.yaml
+- target:
+    group: kubernetes-client.io
+    version: v1
+    kind: ExternalSecret
+    name: apps-ops-k8s-oidc
+  path: ./external-secret.yaml

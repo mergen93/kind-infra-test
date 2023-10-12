@@ -1,0 +1,16 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-app-flagger-nginx-ingress-datadog-example
+spec:
+  template:
+    metadata:
+      annotations:
+        flux.weave.works/ignore: "true"
+        ad.datadoghq.com/flagger-nginx-datadog.check_names: '["openmetrics"]'
+        ad.datadoghq.com/flagger-nginx-datadog.init_configs: '[{}]'
+        ad.datadoghq.com/flagger-nginx-datadog.instances: '[{"prometheus_url":"http://%%host%%:9797/metrics","namespace":"k8s-sandbox-ops-managed-sampleapp-flagger-datadog","metrics":["*"]}]'
+    spec:
+      containers:
+        - name: flagger-nginx-datadog
+          image: hobsons-platform-docker-sandbox-local.jfrog.io/platform/go-sample-app-impact:v1.2

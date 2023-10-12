@@ -1,0 +1,4 @@
+#flagger-prometheus pv configs
+- op: replace
+  path: /spec/csi/volumeHandle
+  value: fs-3e62e5cb::fsap-0aa931c4ec2db9a72

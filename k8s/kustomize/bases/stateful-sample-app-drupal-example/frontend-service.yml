@@ -1,0 +1,18 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stateful-sample-app-drupal-example
+  annotations:
+    flux.weave.works/ignore: "true"
+  labels:
+    app: stateful-sample-app-drupal-example
+spec:
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: http
+  selector:
+    app: stateful-sample-app-drupal-example
+    tier: frontend

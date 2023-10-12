@@ -1,0 +1,12 @@
+#Front-end: Deployment configs
+- op: replace
+  path: /spec/template/spec/containers/0/image
+  value: hobsons-platform-docker-sandbox-local.jfrog.io/platform/drupal-k8s-sample-app:d3b02cdc36518ab4480e43fdc4aa7f42cd6c61a2-1607982505
+#Frond-end: init Container
+- op: replace
+  path: /spec/template/spec/initContainers/0/image
+  value: hobsons-platform-docker-sandbox-local.jfrog.io/platform/drupal-k8s-sample-app:d3b02cdc36518ab4480e43fdc4aa7f42cd6c61a2-1607982505
+#replicas
+- op: replace
+  path: /spec/replicas
+  value: 2

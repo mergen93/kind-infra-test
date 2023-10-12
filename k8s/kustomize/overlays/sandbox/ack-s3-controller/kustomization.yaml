@@ -1,0 +1,10 @@
+resources:
+- ../../../bases/ack-s3-controller
+- service-account.yaml
+namespace: ops
+patchesStrategicMerge:
+  - crb.yaml
+  - deployment-env.yaml
+images:
+- name: public.ecr.aws/aws-controllers-k8s/controller
+  newTag: s3-v0.0.2

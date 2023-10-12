@@ -1,0 +1,7 @@
+namespace: ops
+resources:
+- ../../../bases/weavescope
+- ../../../bases/weavescope-brkt
+patchesStrategicMerge:
+- deployment-env.yaml
+- ds-bkrt-env.yaml

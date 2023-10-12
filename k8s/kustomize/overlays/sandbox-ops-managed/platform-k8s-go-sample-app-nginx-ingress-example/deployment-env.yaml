@@ -1,0 +1,6 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: platform-k8s-go-sample-app-nginx-ingress-example
+spec:
+  replicas: 2

@@ -1,0 +1,15 @@
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: process-open-fds
+  annotations:
+    flux.weave.works/ignore: "true"
+  namespace: test
+spec:
+  provider:
+    type: datadog
+    address: https://api.datadoghq.com
+    secretRef:
+      name: flagger-datadog-key
+  query: |
+    k8s_sandbox_ops_managed_sampleapp_flagger_datadog.process_open_fds{*}.as_count() * 1.0

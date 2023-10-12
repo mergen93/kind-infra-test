@@ -1,0 +1,12 @@
+namespace: "ops-managed"
+resources:
+- ../../../bases/sample-app-flagger-nginx-ingress-datadog-example
+patchesStrategicMerge:
+- deployment.yaml
+patchesJson6902:
+- target:
+    group: extensions
+    version: v1beta1
+    kind: Ingress
+    name: sample-app-flagger-nginx-ingress-datadog-example
+  path: ./ingress.yaml

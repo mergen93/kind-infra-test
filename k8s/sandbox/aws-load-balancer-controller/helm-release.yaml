@@ -1,0 +1,34 @@
+---
+apiVersion: helm.fluxcd.io/v1
+kind: HelmRelease
+metadata:
+  name: aws-load-balancer-controller
+  namespace: ops
+  annotations:
+    flux.weave.works/ignore: "true"
+    fluxcd.io/automated: "true"
+    filter.fluxcd.io/chart-image: glob:v2.2.*
+spec:
+  chart:
+    repository: https://aws.github.io/eks-charts
+    name: aws-load-balancer-controller
+    version: 1.2.3
+  helmVersion: v3
+  values:
+    image:
+      repository: 602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon/aws-load-balancer-controller
+      tag: v2.2.1
+    clusterName: tf-platform-k8s-sandbox
+    region: "us-east-1"
+    vpcId: "vpc-06ab6b08f75b081f7"
+    serviceAccount:
+      name: ops-aws-load-balancer-controller
+      annotations:
+        eks.amazonaws.com/role-arn: arn:aws:iam::452534275406:role/tf-platform-k8s-sandbox-ops-aws-load-balancer-controller
+    enablePodReadinessGateInject: false
+    enableCertManager: false
+    replicaCount: 2
+    ingressClass: alb
+    enableWaf: false
+    enableWafv2: false
+    enableShield: false
